@@ -22,22 +22,22 @@ kernel=Image.gz
 arm_64bit=1
 initramfs initramfs-linux.img followkernel
 
-[all]
 dtoverlay=dwc2,dr_mode=host
+dtoverlay=audremap,pins_12_13
+dtparam=audio=on
 
 [pi3]
 dtoverlay=vc4-kms-v3d
+dtoverlay=uconsole
 
-[pi4]
+[cm4]
 arm_boost=1
 max_framebuffers=2
 dtoverlay=vc4-kms-v3d-pi4
+dtoverlay=uconsole,cm4
 
 [all]
-dtoverlay=audremap,pins_12_13
-dtparam=audio=on
-dtoverlay=uconsole
-
+# whatever you need
 EOF
 
 cat << EOF > "${_MP}/boot/cmdline.txt"
