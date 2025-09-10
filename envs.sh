@@ -6,10 +6,10 @@
 WORKING_DIR="/workspace/image-build"
 
 # image file name
-IMAGE_NAME="test-image.img"
+IMAGE_NAME="uconsole_arch.img"
 
-# full image size, in MiB
-IMAGE_SIZE=4096
+# full image size, in MiB (using ~30GB of the 32GB card, leaving some overhead)
+IMAGE_SIZE=4096 
 
 # boot partition size, in MiB
 BOOT_SIZE=300
@@ -22,14 +22,14 @@ SWAP_SIZE=1024
 # or read from environment
 # can be online resource
 # currently only support for pacstrap and http source are implemented
-#ROOTFS_ARCHIVE=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
+# ROOTFS_ARCHIVE=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 
 # Pacstrap bootstrapping settings
 PACSTRAP_PACMAN_CONFIG_FILE=resources/arch-stage0-pacman.conf
 # For China mainland users
 #PACSTRAP_PACMAN_CONFIG_FILE=resources/arch-stage0-cn-pacman.conf
 
-# first privileged user's name and password
+# first privileged user's name and password (matching the standard uConsole image)
 NEW_USER_NAME=ucon
 NEW_USER_PASSWORD=ucon
 
@@ -43,10 +43,30 @@ PACSTRAP_EXTRA_PACKAGES=(
 	archlinuxarm-keyring
 	raspberrypi-bootloader
 	linux-firmware
+	firmware-raspberrypi
 	wireless-regdb
 	networkmanager
+	iwd
+	wpa_supplicant
+	dhcpcd
 	vim
+	nano
 	sudo
+	openssh
+	iw
+	wireless_tools
+	net-tools
+	iputils
+	man-db
+	man-pages
+	dnsutils
+	wget
+	curl
+	htop
+	lshw
+	usbutils
+	pciutils
+	pacman-contrib
 )
 
 # These are custom packages, located in pkgs

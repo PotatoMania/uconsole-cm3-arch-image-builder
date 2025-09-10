@@ -10,6 +10,7 @@ set -e
 ./20-install-custom-packages.sh
 ./20-write-fstab.sh
 ./21-write-config-and-cmdline-txt.sh
+./22-setup-kernel-and-initramfs.sh
 ./25-create-user.sh
 ./90-unmount-unload-partitions.sh
 ./95-compress-image-file.sh
