@@ -1,0 +1,1 @@
+root=/dev/mmcblk0p2 rootfstype=ext4 rw rootwait loglevel=3 cpufreq.default_governor=schedutil

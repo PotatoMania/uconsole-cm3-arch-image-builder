@@ -1,0 +1,122 @@
+#
+
+create_image() {
+    # p1: full path to image file
+    # p2: image size, in MiB, default to 4096
+    local image_location=$1
+    local image_size=$2
+    image_size=${image_size:-4096}
+
+    [ ! -e "${image_location}" ] || return 1
+    dd if=/dev/zero of="${image_location}" bs=1M count="${image_size}"
+}
+
+initialize_partition_table_mbr() {
+    # A wrapper of parted
+    # p1: full path to image file
+    # pN: partition entry in the format of type[,fs-type]:start:end:format:label:location, both ends inclusive
+    #     example: primary:32768s:65535s  for a primary partition of 32 MiB
+    #              primary:32768s:        for a primary partition from 32768 sector to 100% of the disk, must be the end one
+    # it should be noted that the partition sector size is assumed to be 512 bytes
+    # Only the first 3 sections of each entries is processed.
+    local image_file=$1
+    shift
+
+    # create partition table
+    parted -s -a optimal -- "${image_file}" "mklabel msdos"
+
+    local entry
+    for entry in "$@"
+    do
+        local ptype=$(cut -d':' -f1 <<< "${entry}")
+        ptype=${ptype/,/ }
+        local pstart=$(cut -d':' -f2 <<< "${entry}")
+        local pend=$(cut -d':' -f3 <<< "${entry}")
+
+        if [ "${pend}" = "" ]; then
+            parted -s -a optimal -- "${image_file}" "mkpart ${ptype} ${pstart} 100%"
+            break
+        else
+            parted -s -a optimal -- "${image_file}" "mkpart ${ptype} ${pstart} ${pend}"
+        fi
+    done
+}
+
+format_partitions() {
+    # p1: full path to the device
+    # pN: partition entry in the format of type:start:end:format:label, both ends inclusive
+    # Only the 4th and 5th sections of each entry is processed.
+
+    local image_device=$1
+    shift
+
+    local entry
+    local pindex=1
+    for entry in "$@"
+    do
+        local pformat=$(cut -d':' -f4 <<< "${entry}")
+        local plabel=$(cut -d':' -f5 <<< "${entry}")
+
+        case $pformat in
+            fat)
+                mkfs.fat -n "${plabel}" "${image_device}p${pindex}"
+                ;;
+            fat32)
+                mkfs.fat -F 32 -n "${plabel}" "${image_device}p${pindex}"
+                ;;
+            *)
+                # defaults to ext4
+                mkfs.ext4 -L "${plabel}" "${image_device}p${pindex}"
+                ;;
+        esac
+
+        ((pindex+=1))
+    done
+}
+
+mount_partitions() {
+    # p1: full path to the char device
+    # p2: root mountpoint
+    # pN: partition entry in the format of type:start:end:format:label:location, both ends inclusive
+    # Only the 6th section of each entry is processed.
+    # All location must have leading slash, being an absolute path
+
+    local image_device=$1
+    shift
+
+    local mount_root=$1
+    shift
+
+    local entry
+    local pindex=1
+    local slash_count=0
+    local rearranged=()
+    local sorted_array
+
+    for entry in "$@"
+    do
+        local plocation=$(cut -d':' -f6 <<< "${entry}")
+        [[ "$plocation" = /* ]] || return 1 # must be absolute path
+
+        if [ "${plocation}" = "/" ]; then
+            rearranged+=("0:$pindex:$plocation")
+        else
+            local all_slashes=$(tr -d -c '/' <<< "${plocation}")
+            local slash_count=${#all_slashes}
+
+            rearranged+=("$slash_count:$pindex:$plocation")
+        fi
+
+        ((pindex+=1))
+    done
+
+    IFS=$'\n' sorted_array=($(sort <<< "${rearranged[*]}"))
+
+    for entry in "${sorted_array[@]}"; do
+        pindex=$(cut -d':' -f2 <<< "${entry}")
+        plocation=$(cut -d':' -f3 <<< "${entry}")
+
+        mkdir -p "${mount_root}${plocation}"
+        mount "${image_device}p${pindex}" "${mount_root}${plocation}"
+    done
+}

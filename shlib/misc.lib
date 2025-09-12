@@ -1,0 +1,16 @@
+#
+
+check_var_non_empty() {
+	for v in "$@"
+	do
+		if [ -z "${!v}" ]
+		then
+			printf "$s" "ERROR: Variable $v is empty!\n"
+			return 1
+		fi
+	done
+}
+
+check_is_root() {
+	[[ $EUID -eq 0 ]]
+}

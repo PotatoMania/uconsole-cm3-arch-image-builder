@@ -4,29 +4,23 @@ Here is a set of scripts to create a archlinux image for uConsole(CM3/CM4/CM4S) 
 
 ## How to use the scripts
 
-`envs.sh` is the global config file. Edit the envs as you wish, and run the scripts in ascending order.
-Or, for convenience, run `run-all.sh` once.
+- Install requirements.
+    - For ArchLinux: `pacman -Sy --needed qemu-user-static qemu-user-static-binfmt arch-install-scripts parted dosfstools e2fsprogs`
+- Review the settings in `settings.env`. Make changes if you want.
+- Build the OS image by running `build-image.sh` with root privilege.
 
-No script needs user interaction. But be careful, **scripts require superuser privilege**.
+## Things to do after first boot
 
-To install requirements on ArchLinux:
-
-```bash
-pacman -Sy --needed qemu-user-static qemu-user-static-binfmt arch-install-scripts parted dosfstools e2fsprogs
-```
+- Initialize pacman key database
+    - `pacman-key --init && pacman-key --populate archlinux archlinuxarm`
+- Resize the rootfs partition
+    - Detail not covered here. You can use fdisk to resize the partition, and use `resize2fs` to actually expand the partition.
+- Setup the internet connection
+    1. Enable NetworkManager `systemd enable --now NetworkManager`
+    1. Connect to WiFi `nmcli device wifi connect [SSID] password [password]`
 
 ## About default configuration
 
-Read the `env.sh` first. It's not long.
-
-The default configuration is for CM3(and possibly CM4) with the necessary additions to enable the wireless module.
-
-The default privileged user's name and password are both `ucon`.
-
-It may be necessary to setup locales, package repository mirrors, etc. after flashing the image.
-
-The network can be managed via `nmcli`, given Network Manager enabled via `systemctl enable --now NetworkManager`.
-
-`vim` is installed as a preloaded text editor.
-
-The partition must be resized to utilize all space on uSD card.
+- Read `PACSTRAP_PACKAGES` in `settings.env` to learn included packages.
+- Read `INSTALL_STATIC_FILES` in `settings.env` to learn preloaded config files.
+- The new privileged user is `ucon`, with password `ucon`. *You'll change it right?*

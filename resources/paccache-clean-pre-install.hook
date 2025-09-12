@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Type = Package
+Target = *
+
+[Action]
+Description = Cleaning pacman cache...
+When = PreTransaction
+# only clean uninstalled packages, before installing anything
+Exec = /usr/bin/sh -c '/usr/bin/paccache -rvuk0 --min-atime "15 days ago"'
